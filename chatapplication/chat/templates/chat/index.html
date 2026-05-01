@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Local Chat</title>
+    <style>
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin: 5px 0; padding: 5px; background: #f1f1f1; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Chat</h1>
+    <div id="messages"></div>
+    <input type="text" id="message-input" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/`);
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('message-input');
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.textContent = data.message;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        function sendMessage() {
+            const message = input.value;
+            if (message) {
+                chatSocket.send(JSON.stringify({ 'message': message }));
+                input.value = '';
+            }
+        }
+
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
